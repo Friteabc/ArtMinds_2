@@ -8,6 +8,8 @@ export const imageGenerations = pgTable("image_generations", {
   negativePrompt: text("negative_prompt"),
   seed: integer("seed").notNull(),
   imageUrl: text("image_url").notNull(),
+  width: integer("width").notNull(),
+  height: integer("height").notNull(),
   createdAt: text("created_at").notNull()
 });
 
@@ -16,13 +18,16 @@ export const imageGenerationSchema = createInsertSchema(imageGenerations).pick({
   negativePrompt: true,
   seed: true,
   imageUrl: true,
+  width: true,
+  height: true,
   createdAt: true
 });
 
 export const generateImageSchema = z.object({
   prompt: z.string().min(1, "Prompt is required"),
   negativePrompt: z.string().optional(),
-  seed: z.number().optional()
+  seed: z.number().optional(),
+  aspectRatio: z.enum(["square", "landscape", "portrait"]).default("square")
 });
 
 export type InsertImageGeneration = z.infer<typeof imageGenerationSchema>;

@@ -1,22 +1,30 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { generateImageSchema, type GenerateImageInput } from "@shared/schema";
-import { Wand2 } from "lucide-react";
+import { Wand2, ImageIcon, Sparkles, Download, Camera } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ImageContainer } from "@/components/ui/image-container";
 import { LoadingAnimation } from "@/components/ui/loading-animation";
+
+const aspectRatios = {
+  square: { width: 1024, height: 1024 },
+  landscape: { width: 1280, height: 768 },
+  portrait: { width: 768, height: 1280 }
+};
 
 export default function Home() {
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [seed, setSeed] = useState<number | null>(null);
+  const [lastPrompt, setLastPrompt] = useState<string>("");
   const { toast } = useToast();
 
   const form = useForm<GenerateImageInput>({
@@ -24,53 +32,74 @@ export default function Home() {
     defaultValues: {
       prompt: "",
       negativePrompt: "",
+      aspectRatio: "square"
     }
   });
 
   const generateMutation = useMutation({
     mutationFn: async (data: GenerateImageInput) => {
-      const res = await apiRequest("POST", "/api/generate", data);
+      const dimensions = aspectRatios[data.aspectRatio];
+      const res = await apiRequest("POST", "/api/generate", {
+        ...data,
+        width: dimensions.width,
+        height: dimensions.height
+      });
       return res.json();
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       setGeneratedImage(data.imageUrl);
       setSeed(data.seed);
+      setLastPrompt(variables.prompt);
       toast({
-        title: "Image generated successfully!",
+        title: "Image générée avec succès !",
         description: `Seed: ${data.seed}`,
       });
     },
     onError: (error) => {
       toast({
         variant: "destructive",
-        title: "Error",
+        title: "Erreur",
         description: error.message
       });
     }
   });
 
   return (
-    <div className="min-h-screen bg-background p-6 flex flex-col gap-8">
+    <div className="min-h-screen bg-gradient-to-b from-background to-background/80 p-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-2xl mx-auto w-full"
+        className="max-w-2xl mx-auto w-full space-y-8"
       >
-        <h1 className="text-4xl font-bold text-primary mb-2">AI Image Generator</h1>
-        <p className="text-muted-foreground">Generate stunning images with AI</p>
+        <div className="text-center space-y-2">
+          <motion.div
+            initial={{ scale: 0.9 }}
+            animate={{ scale: 1 }}
+            className="inline-block p-2 rounded-full bg-primary/10 mb-4"
+          >
+            <Sparkles className="w-8 h-8 text-primary" />
+          </motion.div>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent">
+            Générateur d'Images IA
+          </h1>
+          <p className="text-muted-foreground">
+            Créez des images époustouflantes avec l'intelligence artificielle
+          </p>
+        </div>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit((data) => generateMutation.mutate(data))} className="space-y-6 mt-8">
+          <form onSubmit={form.handleSubmit((data) => generateMutation.mutate(data))} 
+                className="space-y-6 backdrop-blur-sm bg-card/30 p-6 rounded-lg border border-border/50">
             <FormField
               control={form.control}
               name="prompt"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Prompt</FormLabel>
+                  <FormLabel>Description de l'image</FormLabel>
                   <FormControl>
                     <Textarea 
-                      placeholder="A futuristic city with flying cars..."
-                      className="h-24"
+                      placeholder="Un paysage futuriste avec des villes flottantes..."
+                      className="h-24 bg-background/50"
                       {...field}
                     />
                   </FormControl>
@@ -83,10 +112,11 @@ export default function Home() {
               name="negativePrompt"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Negative Prompt</FormLabel>
+                  <FormLabel>Éléments à éviter</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="blurry, low quality, distorted..."
+                      placeholder="flou, mauvaise qualité, déformé..."
+                      className="bg-background/50"
                       {...field}
                     />
                   </FormControl>
@@ -94,29 +124,74 @@ export default function Home() {
               )}
             />
 
+            <FormField
+              control={form.control}
+              name="aspectRatio"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Format de l'image</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      className="flex space-x-4"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="square" id="square" />
+                        <label htmlFor="square" className="text-sm">Carré</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="landscape" id="landscape" />
+                        <label htmlFor="landscape" className="text-sm">Paysage</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="portrait" id="portrait" />
+                        <label htmlFor="portrait" className="text-sm">Portrait</label>
+                      </div>
+                    </RadioGroup>
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
             <Button 
               type="submit" 
-              className="w-full"
+              className="w-full group"
               disabled={generateMutation.isPending}
             >
-              <Wand2 className="mr-2 h-4 w-4" />
-              {generateMutation.isPending ? "Generating..." : "Generate Image"}
+              <motion.div
+                animate={{ rotate: generateMutation.isPending ? 360 : 0 }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                className="mr-2"
+              >
+                <Wand2 className="h-4 w-4" />
+              </motion.div>
+              {generateMutation.isPending ? "Génération en cours..." : "Générer l'image"}
             </Button>
           </form>
         </Form>
       </motion.div>
 
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="max-w-2xl mx-auto w-full"
-      >
-        {generateMutation.isPending ? (
-          <LoadingAnimation />
-        ) : generatedImage ? (
-          <ImageContainer imageUrl={generatedImage} seed={seed!} />
-        ) : null}
-      </motion.div>
+      <AnimatePresence>
+        {(generateMutation.isPending || generatedImage) && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="max-w-2xl mx-auto w-full mt-8"
+          >
+            {generateMutation.isPending ? (
+              <LoadingAnimation />
+            ) : generatedImage ? (
+              <ImageContainer 
+                imageUrl={generatedImage} 
+                seed={seed!} 
+                prompt={lastPrompt}
+              />
+            ) : null}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

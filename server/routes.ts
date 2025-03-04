@@ -6,10 +6,17 @@ import { ZodError } from "zod";
 const HF_API_URL = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0";
 const HF_API_KEY = "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";
 
+const aspectRatios = {
+  square: { width: 1024, height: 1024 },
+  landscape: { width: 1280, height: 768 },
+  portrait: { width: 768, height: 1280 }
+};
+
 export async function registerRoutes(app: Express) {
   app.post("/api/generate", async (req, res) => {
     try {
       const input = generateImageSchema.parse(req.body);
+      const dimensions = aspectRatios[input.aspectRatio || "square"];
 
       const payload = {
         inputs: input.prompt,
@@ -18,8 +25,8 @@ export async function registerRoutes(app: Express) {
           num_inference_steps: 60,
           guidance_scale: 8.0,
           seed: input.seed || Math.floor(Math.random() * 2**32),
-          width: 1024,
-          height: 1024
+          width: dimensions.width,
+          height: dimensions.height
         }
       };
 
@@ -48,7 +55,7 @@ export async function registerRoutes(app: Express) {
       if (error instanceof ZodError) {
         res.status(400).json({ message: error.errors[0].message });
       } else {
-        res.status(500).json({ message: "Failed to generate image" });
+        res.status(500).json({ message: "Échec de la génération de l'image" });
       }
     }
   });
