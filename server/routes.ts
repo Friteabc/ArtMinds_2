@@ -4,13 +4,13 @@ import { generateImageSchema } from "@shared/schema";
 import { ZodError } from "zod";
 
 const HF_API_URL = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0";
-const HF_API_KEY = process.env.HUGGINGFACE_API_KEY || "default_key";
+const HF_API_KEY = "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";
 
 export async function registerRoutes(app: Express) {
   app.post("/api/generate", async (req, res) => {
     try {
       const input = generateImageSchema.parse(req.body);
-      
+
       const payload = {
         inputs: input.prompt,
         parameters: {
@@ -38,7 +38,7 @@ export async function registerRoutes(app: Express) {
 
       const buffer = await response.arrayBuffer();
       const base64Image = Buffer.from(buffer).toString('base64');
-      
+
       res.json({ 
         imageUrl: `data:image/png;base64,${base64Image}`,
         seed: payload.parameters.seed
