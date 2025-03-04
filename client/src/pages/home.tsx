@@ -3,8 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { generateImageSchema, type GenerateImageInput } from "@shared/schema";
-import { Wand2, ImageIcon, Sparkles, Download, Camera } from "lucide-react";
+import { generateImageSchema, type GenerateImageInput, imageStyles, defaultNegativePrompt } from "@shared/schema";
+import { Wand2, ImageIcon, Sparkles, Camera } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ImageContainer } from "@/components/ui/image-container";
 import { LoadingAnimation } from "@/components/ui/loading-animation";
 
@@ -31,8 +32,9 @@ export default function Home() {
     resolver: zodResolver(generateImageSchema),
     defaultValues: {
       prompt: "",
-      negativePrompt: "",
-      aspectRatio: "square"
+      negativePrompt: defaultNegativePrompt,
+      aspectRatio: "square",
+      style: "realistic"
     }
   });
 
@@ -80,10 +82,10 @@ export default function Home() {
             <Sparkles className="w-8 h-8 text-primary" />
           </motion.div>
           <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent">
-            Générateur d'Images IA
+            ArtMinds AI
           </h1>
           <p className="text-muted-foreground">
-            Créez des images époustouflantes avec l'intelligence artificielle
+            Créez des images époustouflantes dans le style qui vous inspire
           </p>
         </div>
 
@@ -103,6 +105,32 @@ export default function Home() {
                       {...field}
                     />
                   </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="style"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Style artistique</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="bg-background/50">
+                        <SelectValue placeholder="Choisissez un style" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {imageStyles.map((style) => (
+                        <SelectItem key={style} value={style}>
+                          {style.split("-").map(word => 
+                            word.charAt(0).toUpperCase() + word.slice(1)
+                          ).join(" ")}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </FormItem>
               )}
             />

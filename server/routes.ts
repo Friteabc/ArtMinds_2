@@ -1,15 +1,34 @@
 import type { Express } from "express";
 import { createServer } from "http";
-import { generateImageSchema } from "@shared/schema";
+import { generateImageSchema, aspectRatios, defaultNegativePrompt } from "@shared/schema";
 import { ZodError } from "zod";
+import { v2 } from '@google-cloud/translate';
+const { Translate } = v2;
 
 const HF_API_URL = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0";
 const HF_API_KEY = "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";
 
-const aspectRatios = {
-  square: { width: 1024, height: 1024 },
-  landscape: { width: 1280, height: 768 },
-  portrait: { width: 768, height: 1280 }
+const stylePrompts = {
+  "realistic": "realistic, high quality, photorealistic, highly detailed",
+  "photographic": "professional photography, high quality photo, 8k uhd",
+  "anime": "anime style, anime art, japanese anime, studio ghibli",
+  "manga": "manga style, japanese manga, black and white, ink drawing",
+  "digital-art": "digital art, digital painting, concept art",
+  "oil-painting": "oil painting, traditional art, painted on canvas",
+  "watercolor": "watercolor painting, watercolor art, paint strokes",
+  "sketch": "pencil sketch, hand drawn, graphite drawing",
+  "minimalist": "minimalist style, simple, clean lines, minimal",
+  "cyberpunk": "cyberpunk style, neon, futuristic, sci-fi",
+  "steampunk": "steampunk style, victorian, mechanical, brass",
+  "fantasy": "fantasy art, magical, mythical, epic",
+  "3d-render": "3D render, octane render, unreal engine 5",
+  "pixel-art": "pixel art, 8-bit style, retro game art",
+  "pop-art": "pop art style, andy warhol, bold colors",
+  "comic-book": "comic book style, comic art, cel shaded",
+  "abstract": "abstract art, non-representational, modern art",
+  "surrealist": "surrealist art, surrealism, dreamlike, salvador dali style",
+  "impressionist": "impressionist style, impressionism, claude monet style",
+  "retro": "retro style, vintage, old school"
 };
 
 export async function registerRoutes(app: Express) {
@@ -18,10 +37,22 @@ export async function registerRoutes(app: Express) {
       const input = generateImageSchema.parse(req.body);
       const dimensions = aspectRatios[input.aspectRatio || "square"];
 
+      // Translate prompt to English
+      const translate = new Translate();
+      const [promptTranslation] = await translate.translate(input.prompt, 'en');
+      const [negativeTranslation] = await translate.translate(
+        input.negativePrompt || defaultNegativePrompt, 
+        'en'
+      );
+
+      // Combine style prompt with user prompt
+      const stylePrompt = stylePrompts[input.style];
+      const finalPrompt = `${promptTranslation}, ${stylePrompt}`;
+
       const payload = {
-        inputs: input.prompt,
+        inputs: finalPrompt,
         parameters: {
-          negative_prompt: input.negativePrompt || "",
+          negative_prompt: negativeTranslation,
           num_inference_steps: 60,
           guidance_scale: 8.0,
           seed: input.seed || Math.floor(Math.random() * 2**32),
