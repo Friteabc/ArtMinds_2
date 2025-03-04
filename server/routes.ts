@@ -2,8 +2,6 @@ import type { Express } from "express";
 import { createServer } from "http";
 import { generateImageSchema, aspectRatios, defaultNegativePrompt } from "@shared/schema";
 import { ZodError } from "zod";
-import { v2 } from '@google-cloud/translate';
-const { Translate } = v2;
 
 const HF_API_URL = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0";
 const HF_API_KEY = "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";
@@ -35,24 +33,16 @@ export async function registerRoutes(app: Express) {
   app.post("/api/generate", async (req, res) => {
     try {
       const input = generateImageSchema.parse(req.body);
-      const dimensions = aspectRatios[input.aspectRatio || "square"];
-
-      // Translate prompt to English
-      const translate = new Translate();
-      const [promptTranslation] = await translate.translate(input.prompt, 'en');
-      const [negativeTranslation] = await translate.translate(
-        input.negativePrompt || defaultNegativePrompt, 
-        'en'
-      );
+      const dimensions = aspectRatios[input.aspectRatio];
 
       // Combine style prompt with user prompt
       const stylePrompt = stylePrompts[input.style];
-      const finalPrompt = `${promptTranslation}, ${stylePrompt}`;
+      const finalPrompt = `${input.prompt}, ${stylePrompt}`;
 
       const payload = {
         inputs: finalPrompt,
         parameters: {
-          negative_prompt: negativeTranslation,
+          negative_prompt: input.negativePrompt || defaultNegativePrompt,
           num_inference_steps: 60,
           guidance_scale: 8.0,
           seed: input.seed || Math.floor(Math.random() * 2**32),
@@ -60,6 +50,13 @@ export async function registerRoutes(app: Express) {
           height: dimensions.height
         }
       };
+
+      console.log("Sending request to Hugging Face API:", {
+        url: HF_API_URL,
+        prompt: finalPrompt,
+        dimensions,
+        seed: payload.parameters.seed
+      });
 
       const response = await fetch(HF_API_URL, {
         method: "POST",
@@ -71,6 +68,8 @@ export async function registerRoutes(app: Express) {
       });
 
       if (!response.ok) {
+        const error = await response.text();
+        console.error("Hugging Face API error:", error);
         throw new Error("Failed to generate image");
       }
 
@@ -83,6 +82,7 @@ export async function registerRoutes(app: Express) {
       });
 
     } catch (error) {
+      console.error("Error in /api/generate:", error);
       if (error instanceof ZodError) {
         res.status(400).json({ message: error.errors[0].message });
       } else {
