@@ -78,31 +78,27 @@ export default function Generator() {
   }, [generatedImage]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-background/80 pt-24">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-2xl mx-auto w-full space-y-8 p-6"
-      >
-        <div className="text-center space-y-2">
+    <div className="min-h-screen bg-gradient-to-b from-background to-background/80 pt-8 px-4 md:pt-24">
+      <div className="max-w-2xl mx-auto w-full space-y-8">
+        <div className="text-center space-y-6">
           <motion.div
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
             className="inline-block p-2 rounded-full bg-primary/10 mb-4"
           >
             <Sparkles className="w-8 h-8 text-primary" />
           </motion.div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent">
+          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-primary/50 bg-clip-text text-transparent">
             Générateur d'Images
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm md:text-base text-muted-foreground">
             Créez des images époustouflantes dans le style qui vous inspire
           </p>
         </div>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit((data) => generateMutation.mutate(data))} 
-                className="space-y-6 backdrop-blur-sm bg-card/30 p-6 rounded-lg border border-border/50">
+                className="space-y-6 backdrop-blur-sm bg-card/30 p-4 md:p-6 rounded-lg border border-border/50">
             <FormField
               control={form.control}
               name="prompt"
@@ -209,7 +205,7 @@ export default function Generator() {
             </Button>
           </form>
         </Form>
-      </motion.div>
+      </div>
 
       <AnimatePresence>
         {(generateMutation.isPending || generatedImage) && (
@@ -218,7 +214,7 @@ export default function Generator() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="max-w-2xl mx-auto w-full mt-8 p-6"
+            className="max-w-2xl mx-auto w-full mt-8 p-4 md:p-6"
           >
             {generateMutation.isPending ? (
               <LoadingAnimation />
