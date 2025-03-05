@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react"; // Added useRef and useEffect
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetTrigger } from "./sheet";
 export function Navbar() {
   const [location] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef(null); // Added useRef hook
 
   const links = [
     { href: "/", label: "Accueil" },
@@ -16,6 +17,17 @@ export function Navbar() {
     { href: "/about", label: "À propos" },
     { href: "/contact", label: "Contact" }
   ];
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-sm border-b border-border/50">
@@ -38,8 +50,8 @@ export function Navbar() {
               <Link key={link.href} href={link.href}>
                 <span className={cn(
                   "px-3 py-2 rounded-md text-sm transition-colors cursor-pointer",
-                  location === link.href 
-                    ? "bg-primary/10 text-primary" 
+                  location === link.href
+                    ? "bg-primary/10 text-primary"
                     : "hover:bg-primary/5 text-muted-foreground hover:text-primary"
                 )}>
                   {link.label}
@@ -56,15 +68,15 @@ export function Navbar() {
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[80vw] sm:w-[350px]">
+              <SheetContent ref={menuRef} side="right" className="w-[80vw] sm:w-[350px]"> {/* Added ref */}
                 <nav className="flex flex-col gap-4">
                   {links.map((link) => (
                     <Link key={link.href} href={link.href}>
-                      <span 
+                      <span
                         className={cn(
                           "block px-4 py-2 rounded-md text-sm transition-colors cursor-pointer",
-                          location === link.href 
-                            ? "bg-primary/10 text-primary" 
+                          location === link.href
+                            ? "bg-primary/10 text-primary"
                             : "hover:bg-primary/5 text-muted-foreground hover:text-primary"
                         )}
                         onClick={() => setIsOpen(false)}
