@@ -4,7 +4,7 @@ import { generateImageSchema, aspectRatios, defaultNegativePrompt } from "@share
 import { ZodError } from "zod";
 
 const HF_API_URL = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0";
-const HF_API_KEY = "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";
+const HF_API_KEY = "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";
 
 const stylePrompts = {
   "realistic": "realistic, high quality, photorealistic, highly detailed",
