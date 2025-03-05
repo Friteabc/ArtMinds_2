@@ -1,9 +1,14 @@
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "./button";
+import { Sheet, SheetContent, SheetTrigger } from "./sheet";
 
 export function Navbar() {
   const [location] = useLocation();
+  const [isOpen, setIsOpen] = useState(false);
 
   const links = [
     { href: "/", label: "Accueil" },
@@ -27,7 +32,8 @@ export function Navbar() {
             </Link>
           </motion.div>
 
-          <div className="flex space-x-4">
+          {/* Navigation desktop */}
+          <div className="hidden md:flex space-x-4">
             {links.map((link) => (
               <Link key={link.href} href={link.href}>
                 <span className={cn(
@@ -40,6 +46,36 @@ export function Navbar() {
                 </span>
               </Link>
             ))}
+          </div>
+
+          {/* Menu mobile */}
+          <div className="md:hidden">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[80vw] sm:w-[350px]">
+                <nav className="flex flex-col gap-4">
+                  {links.map((link) => (
+                    <Link key={link.href} href={link.href}>
+                      <span 
+                        className={cn(
+                          "block px-4 py-2 rounded-md text-sm transition-colors cursor-pointer",
+                          location === link.href 
+                            ? "bg-primary/10 text-primary" 
+                            : "hover:bg-primary/5 text-muted-foreground hover:text-primary"
+                        )}
+                        onClick={() => setIsOpen(false)}
+                      >
+                        {link.label}
+                      </span>
+                    </Link>
+                  ))}
+                </nav>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </div>
