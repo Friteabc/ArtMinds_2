@@ -3,19 +3,12 @@ import { createServer } from "http";
 import { generateImageSchema, aspectRatios, defaultNegativePrompt } from "@shared/schema";
 import { ZodError } from "zod";
 import { storage } from "./storage";
-import { google } from "googleapis";
-import { OAuth2Client } from "google-auth-library";
+import axios from "axios";
+import FormData from "form-data";
 
 const HF_API_URL = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0";
 const HF_API_KEY = process.env.HF_API_KEY;
-
-const oauth2Client = new OAuth2Client(
-  process.env.GOOGLE_DRIVE_CLIENT_ID,
-  process.env.GOOGLE_DRIVE_CLIENT_SECRET,
-  `${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co/api/google/callback`
-);
-
-const drive = google.drive({ version: 'v3', auth: oauth2Client });
+const IMGBB_API_KEY = "1a031557e6345c644edaa0aba9105757";
 
 const stylePrompts = {
   "realistic": "realistic, high quality, photorealistic, highly detailed",
@@ -41,46 +34,6 @@ const stylePrompts = {
 };
 
 export async function registerRoutes(app: Express) {
-  // Route pour l'autorisation Google Drive
-  app.get("/api/google/authorize", (req, res) => {
-    const authUrl = oauth2Client.generateAuthUrl({
-      access_type: 'offline',
-      scope: ['https://www.googleapis.com/auth/drive.file']
-    });
-    res.json({ url: authUrl });
-  });
-
-  // Callback pour Google Drive
-  app.get("/api/google/callback", async (req, res) => {
-    try {
-      const { code } = req.query;
-      const { tokens } = await oauth2Client.getToken(code as string);
-      oauth2Client.setCredentials(tokens);
-
-      // Créer un dossier pour l'utilisateur
-      const folderResponse = await drive.files.create({
-        requestBody: {
-          name: 'ArtMinds AI Generated Images',
-          mimeType: 'application/vnd.google-apps.folder'
-        }
-      });
-
-      // Mettre à jour les informations de l'utilisateur
-      if (req.user?.id) {
-        await storage.updateUserDriveInfo(
-          req.user.id,
-          tokens.access_token!,
-          folderResponse.data.id!
-        );
-      }
-
-      res.redirect('/profile');
-    } catch (error) {
-      console.error('Google Drive callback error:', error);
-      res.redirect('/profile?error=drive_connection_failed');
-    }
-  });
-
   // Route pour créer ou mettre à jour un utilisateur
   app.post("/api/users", async (req, res) => {
     try {
@@ -185,37 +138,23 @@ export async function registerRoutes(app: Express) {
       const buffer = await response.arrayBuffer();
       const base64Image = Buffer.from(buffer).toString('base64');
 
-      // Sauvegarder dans Google Drive si connecté
-      if (user.driveConnected && user.driveToken && user.driveFolderId) {
-        try {
-          oauth2Client.setCredentials({ access_token: user.driveToken });
+      // Upload to ImgBB
+      const formData = new FormData();
+      formData.append('image', base64Image);
 
-          // Convertir l'image base64 en Buffer
-          const imageBuffer = Buffer.from(base64Image, 'base64');
+      const imgbbResponse = await axios.post(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, formData, {
+        headers: formData.getHeaders()
+      });
 
-          // Créer le fichier dans Google Drive
-          await drive.files.create({
-            requestBody: {
-              name: `ArtMinds_${Date.now()}.png`,
-              parents: [user.driveFolderId],
-              description: `Prompt: ${input.prompt}\nStyle: ${input.style}\nSeed: ${payload.parameters.seed}`
-            },
-            media: {
-              mimeType: 'image/png',
-              body: imageBuffer
-            }
-          });
-        } catch (error) {
-          console.error("Google Drive upload error:", error);
-          // Continue même si l'upload échoue
-        }
-      }
+      const imgbbData = imgbbResponse.data.data;
 
       // Après la génération réussie, déduire les crédits
       const updatedUser = await storage.updateUserCredits(userId, user.credits - 3.5);
 
       res.json({ 
-        imageUrl: `data:image/png;base64,${base64Image}`,
+        imageUrl: imgbbData.url,
+        displayUrl: imgbbData.display_url,
+        deleteUrl: imgbbData.delete_url,
         seed: payload.parameters.seed,
         remainingCredits: updatedUser.credits
       });

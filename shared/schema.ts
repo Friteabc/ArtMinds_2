@@ -21,6 +21,8 @@ export const imageGenerations = pgTable("image_generations", {
   negativePrompt: text("negative_prompt"),
   seed: integer("seed").notNull(),
   imageUrl: text("image_url").notNull(),
+  displayUrl: text("display_url").notNull(),
+  deleteUrl: text("delete_url"),
   width: integer("width").notNull(),
   height: integer("height").notNull(),
   style: text("style").notNull(),
@@ -32,6 +34,8 @@ export const imageGenerationSchema = createInsertSchema(imageGenerations).pick({
   negativePrompt: true,
   seed: true,
   imageUrl: true,
+  displayUrl: true,
+  deleteUrl: true,
   width: true,
   height: true,
   style: true,
@@ -57,9 +61,6 @@ export const users = pgTable("users", {
   email: text("email").notNull(),
   credits: integer("credits").notNull().default(10),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-  driveConnected: boolean("drive_connected").default(false),
-  driveToken: text("drive_token"),
-  driveFolderId: text("drive_folder_id"),
 });
 
 export const userSchema = createInsertSchema(users);
