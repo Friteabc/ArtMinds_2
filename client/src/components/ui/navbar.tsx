@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { Link, useLocation } from "wouter";
-import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, User, LogOut } from "lucide-react";
+import { motion } from "framer-motion";
+import { Menu, User, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./button";
 import { Sheet, SheetContent, SheetTrigger } from "./sheet";
@@ -60,37 +60,40 @@ export function Navbar() {
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                  <Button variant="ghost" size="icon" className="relative h-8 w-8 overflow-hidden rounded-full">
                     {user.photoURL ? (
                       <img
                         src={user.photoURL}
-                        alt="Avatar"
-                        className="h-9 w-9 rounded-full"
+                        alt={user.displayName || "Avatar"}
+                        className="h-8 w-8 object-cover rounded-full"
                       />
                     ) : (
                       <User className="h-5 w-5" />
                     )}
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuLabel>
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium leading-none">{user.displayName}</p>
                       <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                      {user.credits !== undefined && (
+                        <p className="text-xs font-medium text-primary">Crédits : {user.credits}</p>
+                      )}
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link href="/profile">
-                      <div className="flex items-center">
+                      <span className="flex items-center w-full">
                         <User className="mr-2 h-4 w-4" />
-                        <span>Profil</span>
-                      </div>
+                        Profil
+                      </span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem onSelect={() => logout()}>
                     <LogOut className="mr-2 h-4 w-4" />
-                    <span>Déconnexion</span>
+                    Déconnexion
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -129,6 +132,24 @@ export function Navbar() {
                   ))}
                   {user && (
                     <>
+                      <div className="px-4 py-2">
+                        <div className="flex items-center space-x-3">
+                          {user.photoURL && (
+                            <img
+                              src={user.photoURL}
+                              alt={user.displayName || "Avatar"}
+                              className="h-8 w-8 rounded-full object-cover"
+                            />
+                          )}
+                          <div>
+                            <p className="text-sm font-medium">{user.displayName}</p>
+                            <p className="text-xs text-muted-foreground">{user.email}</p>
+                            {user.credits !== undefined && (
+                              <p className="text-xs font-medium text-primary">Crédits : {user.credits}</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                       <Link href="/profile">
                         <span className="block px-4 py-2 rounded-md text-sm transition-colors cursor-pointer hover:bg-primary/5 text-muted-foreground hover:text-primary">
                           Profil
@@ -136,7 +157,7 @@ export function Navbar() {
                       </Link>
                       <button
                         onClick={() => logout()}
-                        className="block px-4 py-2 rounded-md text-sm transition-colors cursor-pointer hover:bg-primary/5 text-muted-foreground hover:text-primary text-left"
+                        className="block w-full text-left px-4 py-2 rounded-md text-sm transition-colors cursor-pointer hover:bg-primary/5 text-muted-foreground hover:text-primary"
                       >
                         Déconnexion
                       </button>
