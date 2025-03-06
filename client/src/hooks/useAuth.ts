@@ -18,14 +18,20 @@ export function useAuth() {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
+          console.log("Firebase user connecté:", {
+            uid: firebaseUser.uid,
+            email: firebaseUser.email
+          });
+
           // Créer ou mettre à jour l'utilisateur dans notre API
-          const createResponse = await apiRequest('POST', '/api/users', {
+          const response = await apiRequest('POST', '/api/users', {
             id: firebaseUser.uid,
             email: firebaseUser.email,
           });
-          const userData = await createResponse.json();
 
-          // Mettre à jour l'état avec les données de l'utilisateur
+          const userData = await response.json();
+          console.log("Données utilisateur reçues de l'API:", userData);
+
           setUser({
             ...firebaseUser,
             credits: userData.credits || 10,
@@ -35,6 +41,7 @@ export function useAuth() {
           setUser(null);
         }
       } else {
+        console.log("Aucun utilisateur Firebase connecté");
         setUser(null);
       }
       setLoading(false);
@@ -47,8 +54,7 @@ export function useAuth() {
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-
-      // L'utilisateur sera créé/mis à jour via l'effet onAuthStateChanged
+      console.log("Connexion Google réussie:", result.user.uid);
       return result.user;
     } catch (error) {
       console.error("Erreur de connexion:", error);

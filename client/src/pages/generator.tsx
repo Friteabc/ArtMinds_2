@@ -57,9 +57,13 @@ export default function Generator() {
         ...data,
         width: dimensions.width,
         height: dimensions.height,
-        userId: user.id
+        userId: user.id,
+        debug: true // Ajouter un flag de debug
       });
-      return res.json();
+
+      const jsonResponse = await res.json();
+      console.log("Réponse de l'API generate:", jsonResponse);
+      return jsonResponse;
     },
     onSuccess: (data, variables) => {
       setGeneratedImage(data.imageUrl);
@@ -71,6 +75,7 @@ export default function Generator() {
       });
     },
     onError: (error: Error) => {
+      console.error("Erreur lors de la génération:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
