@@ -6,6 +6,7 @@ import { Navbar } from "@/components/ui/navbar";
 import { Footer } from "@/components/ui/footer";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PrivateRoute } from "@/components/ui/private-route";
+import { CookieConsent } from "@/components/ui/cookie-consent";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Generator from "@/pages/generator";
@@ -46,6 +47,7 @@ function App() {
             <Router />
           </main>
           <Footer />
+          <CookieConsent />
         </div>
         <Toaster />
       </AuthProvider>
