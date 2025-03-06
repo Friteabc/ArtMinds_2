@@ -7,6 +7,7 @@ import { generateImageSchema, type GenerateImageInput, imageStyles, defaultNegat
 import { Wand2, Sparkles } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuthContext } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -28,6 +29,7 @@ export default function Generator() {
   const [lastPrompt, setLastPrompt] = useState<string>("");
   const imageRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const { user } = useAuthContext();
 
   const form = useForm<GenerateImageInput>({
     resolver: zodResolver(generateImageSchema),
@@ -45,7 +47,8 @@ export default function Generator() {
       const res = await apiRequest("POST", "/api/generate", {
         ...data,
         width: dimensions.width,
-        height: dimensions.height
+        height: dimensions.height,
+        userId: user?.id
       });
       return res.json();
     },
@@ -55,10 +58,10 @@ export default function Generator() {
       setLastPrompt(variables.prompt);
       toast({
         title: "Image générée avec succès !",
-        description: `Seed: ${data.seed}`,
+        description: `Seed: ${data.seed} - Crédits restants : ${data.remainingCredits}`,
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         variant: "destructive",
         title: "Erreur",

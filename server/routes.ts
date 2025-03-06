@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer } from "http";
 import { generateImageSchema, aspectRatios, defaultNegativePrompt } from "@shared/schema";
 import { ZodError } from "zod";
+import { storage } from "./storage";
 
 const HF_API_URL = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0";
 const HF_API_KEY = process.env.HF_API_KEY;
@@ -33,6 +34,22 @@ export async function registerRoutes(app: Express) {
   app.post("/api/generate", async (req, res) => {
     try {
       const input = generateImageSchema.parse(req.body);
+      const { userId } = req.body;
+
+      if (!userId) {
+        throw new Error("Utilisateur non authentifié");
+      }
+
+      // Vérifier les crédits de l'utilisateur
+      const user = await storage.getUser(userId);
+      if (!user) {
+        throw new Error("Utilisateur non trouvé");
+      }
+
+      if (user.credits < 3.5) {
+        throw new Error("Crédits insuffisants pour générer une image");
+      }
+
       const dimensions = aspectRatios[input.aspectRatio];
 
       // Combine style prompt with user prompt
@@ -80,9 +97,13 @@ export async function registerRoutes(app: Express) {
       const buffer = await response.arrayBuffer();
       const base64Image = Buffer.from(buffer).toString('base64');
 
+      // Après la génération réussie, déduire les crédits
+      const updatedUser = await storage.updateUserCredits(userId, user.credits - 3.5);
+
       res.json({ 
         imageUrl: `data:image/png;base64,${base64Image}`,
-        seed: payload.parameters.seed
+        seed: payload.parameters.seed,
+        remainingCredits: updatedUser.credits
       });
 
     } catch (error) {
@@ -90,7 +111,7 @@ export async function registerRoutes(app: Express) {
       if (error instanceof ZodError) {
         res.status(400).json({ message: error.errors[0].message });
       } else {
-        res.status(500).json({ message: "Échec de la génération de l'image" });
+        res.status(500).json({ message: (error as Error).message });
       }
     }
   });
