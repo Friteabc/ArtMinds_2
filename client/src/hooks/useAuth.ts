@@ -30,7 +30,12 @@ export function useAuth() {
           } as ExtendedUser);
         } catch (error) {
           console.error("Erreur lors de la récupération des données:", error);
-          setUser(firebaseUser as ExtendedUser);
+          // En cas d'erreur, on utilise quand même les données de Firebase
+          setUser({
+            ...firebaseUser,
+            credits: 0,
+            driveConnected: false
+          } as ExtendedUser);
         }
       } else {
         setUser(null);
