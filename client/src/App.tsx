@@ -10,6 +10,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Generator from "@/pages/generator";
 import Login from "@/pages/login";
+import Profile from "@/pages/profile";
 import About from "@/pages/about";
 import Contact from "@/pages/contact";
 
@@ -21,6 +22,11 @@ function Router() {
       <Route path="/generator">
         <PrivateRoute>
           <Generator />
+        </PrivateRoute>
+      </Route>
+      <Route path="/profile">
+        <PrivateRoute>
+          <Profile />
         </PrivateRoute>
       </Route>
       <Route path="/about" component={About} />

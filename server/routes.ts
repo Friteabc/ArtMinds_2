@@ -31,6 +31,44 @@ const stylePrompts = {
 };
 
 export async function registerRoutes(app: Express) {
+  // Route pour créer ou mettre à jour un utilisateur
+  app.post("/api/users", async (req, res) => {
+    try {
+      const { id, email } = req.body;
+
+      if (!id || !email) {
+        throw new Error("ID et email requis");
+      }
+
+      let user = await storage.getUser(id);
+
+      if (!user) {
+        user = await storage.createUser({ id, email });
+      }
+
+      res.json(user);
+    } catch (error) {
+      console.error("Error in /api/users:", error);
+      res.status(500).json({ message: (error as Error).message });
+    }
+  });
+
+  // Route pour obtenir les informations d'un utilisateur
+  app.get("/api/users/:id", async (req, res) => {
+    try {
+      const user = await storage.getUser(req.params.id);
+
+      if (!user) {
+        return res.status(404).json({ message: "Utilisateur non trouvé" });
+      }
+
+      res.json(user);
+    } catch (error) {
+      console.error("Error in /api/users/:id:", error);
+      res.status(500).json({ message: (error as Error).message });
+    }
+  });
+
   app.post("/api/generate", async (req, res) => {
     try {
       const input = generateImageSchema.parse(req.body);
