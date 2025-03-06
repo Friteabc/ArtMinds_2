@@ -43,12 +43,16 @@ export default function Generator() {
 
   const generateMutation = useMutation({
     mutationFn: async (data: GenerateImageInput) => {
+      if (!user?.id) {
+        throw new Error("Veuillez vous connecter pour générer une image");
+      }
+
       const dimensions = aspectRatios[data.aspectRatio];
       const res = await apiRequest("POST", "/api/generate", {
         ...data,
         width: dimensions.width,
         height: dimensions.height,
-        userId: user?.id
+        userId: user.id
       });
       return res.json();
     },

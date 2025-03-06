@@ -81,17 +81,23 @@ export async function registerRoutes(app: Express) {
 
   app.post("/api/generate", async (req, res) => {
     try {
-      const input = generateImageSchema.parse(req.body);
-      const { userId } = req.body;
+      const { prompt, negativePrompt, style, aspectRatio, userId } = req.body;
 
       if (!userId) {
-        throw new Error("Utilisateur non authentifié");
+        return res.status(401).json({ message: "Utilisateur non authentifié" });
       }
+
+      const input = generateImageSchema.parse({
+        prompt,
+        negativePrompt,
+        style,
+        aspectRatio
+      });
 
       // Vérifier les crédits de l'utilisateur
       const user = await storage.getUser(userId);
       if (!user) {
-        throw new Error("Utilisateur non trouvé");
+        return res.status(404).json({ message: "Utilisateur non trouvé" });
       }
 
       console.log(`Vérification des crédits pour l'utilisateur ${userId}:`, {
@@ -100,7 +106,7 @@ export async function registerRoutes(app: Express) {
       });
 
       if (user.credits < 3.5) {
-        throw new Error("Crédits insuffisants pour générer une image (3.5 crédits requis)");
+        return res.status(400).json({ message: "Crédits insuffisants pour générer une image (3.5 crédits requis)" });
       }
 
       const dimensions = aspectRatios[input.aspectRatio];

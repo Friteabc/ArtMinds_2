@@ -59,7 +59,7 @@ export type GenerateImageInput = z.infer<typeof generateImageSchema>;
 export const users = pgTable("users", {
   id: text("id").primaryKey(), // Firebase UID
   email: text("email").notNull(),
-  credits: integer("credits").notNull().default(10),
+  credits: integer("credits").notNull().default(10), // Ensure default is 10
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
