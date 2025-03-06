@@ -4,6 +4,7 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUserCredits(id: string, newCredits: number): Promise<User>;
+  updateUserDriveInfo(id: string, driveToken: string, folderId: string): Promise<User>;
 }
 
 export class MemStorage implements IStorage {
@@ -20,8 +21,11 @@ export class MemStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const user: User = {
       ...insertUser,
-      credits: 10, // Crédits initiaux
-      createdAt: new Date()
+      credits: 10,
+      createdAt: new Date(),
+      driveConnected: false,
+      driveToken: null,
+      driveFolderId: null
     };
     this.users.set(user.id, user);
     return user;
@@ -35,6 +39,21 @@ export class MemStorage implements IStorage {
     const updatedUser: User = {
       ...user,
       credits: newCredits
+    };
+    this.users.set(id, updatedUser);
+    return updatedUser;
+  }
+
+  async updateUserDriveInfo(id: string, driveToken: string, folderId: string): Promise<User> {
+    const user = await this.getUser(id);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    const updatedUser: User = {
+      ...user,
+      driveConnected: true,
+      driveToken,
+      driveFolderId: folderId
     };
     this.users.set(id, updatedUser);
     return updatedUser;

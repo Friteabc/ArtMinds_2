@@ -25,6 +25,20 @@ export default function Profile() {
     }
   };
 
+  const handleConnectDrive = async () => {
+    try {
+      const response = await fetch('/api/google/authorize');
+      const { url } = await response.json();
+      window.location.href = url;
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de connecter Google Drive"
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-background/80 pt-8 px-4 md:pt-16">
       <div className="max-w-4xl mx-auto space-y-8">
@@ -77,6 +91,17 @@ export default function Profile() {
                 </CardContent>
               </Card>
             </div>
+
+            {!user?.driveConnected && (
+              <div className="mt-6">
+                <Button onClick={handleConnectDrive} className="w-full">
+                  Connecter Google Drive
+                </Button>
+                <p className="mt-2 text-sm text-center text-muted-foreground">
+                  Connectez votre Google Drive pour sauvegarder vos créations
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 

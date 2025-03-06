@@ -3,8 +3,12 @@ import { GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, type 
 import { auth } from '@/lib/firebase';
 import { apiRequest } from '@/lib/queryClient';
 
-interface ExtendedUser extends User {
+interface ExtendedUser extends Omit<User, 'photoURL'> {
+  photoURL: string | null;
   credits?: number;
+  displayName: string | null;
+  email: string | null;
+  driveConnected?: boolean;
 }
 
 export function useAuth() {
@@ -15,17 +19,18 @@ export function useAuth() {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
-          // Récupérer les crédits de l'utilisateur depuis l'API
+          // Récupérer les informations de l'utilisateur depuis l'API
           const response = await apiRequest('GET', `/api/users/${firebaseUser.uid}`);
           const userData = await response.json();
 
           setUser({
             ...firebaseUser,
-            credits: userData.credits
-          });
+            credits: userData.credits,
+            driveConnected: userData.driveConnected,
+          } as ExtendedUser);
         } catch (error) {
-          console.error("Erreur lors de la récupération des crédits:", error);
-          setUser(firebaseUser);
+          console.error("Erreur lors de la récupération des données:", error);
+          setUser(firebaseUser as ExtendedUser);
         }
       } else {
         setUser(null);
@@ -38,6 +43,7 @@ export function useAuth() {
 
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
+    provider.addScope('https://www.googleapis.com/auth/drive.file');
     try {
       const result = await signInWithPopup(auth, provider);
       // Créer ou mettre à jour l'utilisateur dans notre backend

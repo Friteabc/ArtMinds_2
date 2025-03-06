@@ -57,6 +57,9 @@ export const users = pgTable("users", {
   email: text("email").notNull(),
   credits: integer("credits").notNull().default(10),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  driveConnected: boolean("drive_connected").default(false),
+  driveToken: text("drive_token"),
+  driveFolderId: text("drive_folder_id"),
 });
 
 export const userSchema = createInsertSchema(users);
