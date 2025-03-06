@@ -40,17 +40,17 @@ export async function registerRoutes(app: Express) {
       const { id, email } = req.body;
 
       if (!id || !email) {
-        throw new Error("ID et email requis");
+        return res.status(400).json({ message: "ID et email requis" });
       }
 
       let user = await storage.getUser(id);
 
       if (!user) {
-        // S'assurer que le nouvel utilisateur reçoit 10 crédits
+        // Créer un nouvel utilisateur avec 10 crédits
         user = await storage.createUser({ 
           id, 
           email,
-          credits: 10, // Explicitement définir les crédits initiaux
+          credits: 10,
           createdAt: new Date()
         });
         console.log(`Nouvel utilisateur créé avec ${user.credits} crédits:`, { id, email });
@@ -79,6 +79,7 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  // Route pour générer une image
   app.post("/api/generate", async (req, res) => {
     try {
       const { prompt, negativePrompt, style, aspectRatio, userId } = req.body;
@@ -87,14 +88,7 @@ export async function registerRoutes(app: Express) {
         return res.status(401).json({ message: "Utilisateur non authentifié" });
       }
 
-      const input = generateImageSchema.parse({
-        prompt,
-        negativePrompt,
-        style,
-        aspectRatio
-      });
-
-      // Vérifier les crédits de l'utilisateur
+      // Vérifier si l'utilisateur existe et a assez de crédits
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ message: "Utilisateur non trouvé" });
@@ -108,6 +102,13 @@ export async function registerRoutes(app: Express) {
       if (user.credits < 3.5) {
         return res.status(400).json({ message: "Crédits insuffisants pour générer une image (3.5 crédits requis)" });
       }
+
+      const input = generateImageSchema.parse({
+        prompt,
+        negativePrompt,
+        style,
+        aspectRatio
+      });
 
       const dimensions = aspectRatios[input.aspectRatio];
 

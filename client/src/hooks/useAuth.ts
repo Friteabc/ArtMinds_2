@@ -5,10 +5,9 @@ import { apiRequest } from '@/lib/queryClient';
 
 interface ExtendedUser extends Omit<User, 'photoURL'> {
   photoURL: string | null;
-  credits?: number;
+  credits: number;
   displayName: string | null;
   email: string | null;
-  driveConnected?: boolean;
 }
 
 export function useAuth() {
@@ -19,23 +18,21 @@ export function useAuth() {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
-          // Récupérer les informations de l'utilisateur depuis l'API
-          const response = await apiRequest('GET', `/api/users/${firebaseUser.uid}`);
-          const userData = await response.json();
+          // Créer ou mettre à jour l'utilisateur dans notre API
+          const createResponse = await apiRequest('POST', '/api/users', {
+            id: firebaseUser.uid,
+            email: firebaseUser.email,
+          });
+          const userData = await createResponse.json();
 
+          // Mettre à jour l'état avec les données de l'utilisateur
           setUser({
             ...firebaseUser,
-            credits: userData.credits,
-            driveConnected: userData.driveConnected,
+            credits: userData.credits || 10,
           } as ExtendedUser);
         } catch (error) {
-          console.error("Erreur lors de la récupération des données:", error);
-          // En cas d'erreur, on utilise quand même les données de Firebase
-          setUser({
-            ...firebaseUser,
-            credits: 0,
-            driveConnected: false
-          } as ExtendedUser);
+          console.error("Erreur lors de la création/mise à jour de l'utilisateur:", error);
+          setUser(null);
         }
       } else {
         setUser(null);
@@ -47,15 +44,11 @@ export function useAuth() {
   }, []);
 
   const signInWithGoogle = async () => {
-    const provider = new GoogleAuthProvider();
-    provider.addScope('https://www.googleapis.com/auth/drive.file');
     try {
+      const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      // Créer ou mettre à jour l'utilisateur dans notre backend
-      await apiRequest('POST', '/api/users', {
-        id: result.user.uid,
-        email: result.user.email,
-      });
+
+      // L'utilisateur sera créé/mis à jour via l'effet onAuthStateChanged
       return result.user;
     } catch (error) {
       console.error("Erreur de connexion:", error);
@@ -63,7 +56,15 @@ export function useAuth() {
     }
   };
 
-  const logout = () => signOut(auth);
+  const logout = async () => {
+    try {
+      await signOut(auth);
+      setUser(null);
+    } catch (error) {
+      console.error("Erreur de déconnexion:", error);
+      throw error;
+    }
+  };
 
   return {
     user,
