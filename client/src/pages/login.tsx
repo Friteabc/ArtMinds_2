@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -5,8 +6,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FcGoogle } from "react-icons/fc";
 
 export default function Login() {
-  const { signInWithGoogle } = useAuthContext();
+  const { signInWithGoogle, user } = useAuthContext();
   const [, setLocation] = useLocation();
+
+  // Rediriger vers /generator si déjà connecté
+  useEffect(() => {
+    if (user) {
+      setLocation("/generator");
+    }
+  }, [user, setLocation]);
 
   const handleLogin = async () => {
     try {
