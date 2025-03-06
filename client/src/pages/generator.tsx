@@ -43,9 +43,14 @@ export default function Generator() {
 
   const generateMutation = useMutation({
     mutationFn: async (data: GenerateImageInput) => {
-      if (!user?.id) {
+      if (!user) {
         throw new Error("Veuillez vous connecter pour générer une image");
       }
+
+      console.log("Tentative de génération d'image avec l'utilisateur:", {
+        userId: user.id,
+        credits: user.credits
+      });
 
       const dimensions = aspectRatios[data.aspectRatio];
       const res = await apiRequest("POST", "/api/generate", {
@@ -74,7 +79,6 @@ export default function Generator() {
     }
   });
 
-  // Effet de défilement automatique
   useEffect(() => {
     if (generatedImage && imageRef.current) {
       imageRef.current.scrollIntoView({ 
@@ -83,6 +87,15 @@ export default function Generator() {
       });
     }
   }, [generatedImage]);
+
+  // Vérifier l'état d'authentification au chargement
+  useEffect(() => {
+    console.log("État d'authentification:", {
+      isAuthenticated: !!user,
+      userId: user?.id,
+      credits: user?.credits
+    });
+  }, [user]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-background/80 pt-8 px-4 md:pt-24">

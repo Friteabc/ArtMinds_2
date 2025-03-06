@@ -84,12 +84,21 @@ export async function registerRoutes(app: Express) {
     try {
       const { prompt, negativePrompt, style, aspectRatio, userId } = req.body;
 
-      if (!userId) {
+      // Vérification plus stricte de l'authentification
+      if (!userId || typeof userId !== 'string') {
+        console.log("Erreur d'authentification - userId manquant ou invalide:", { userId });
         return res.status(401).json({ message: "Utilisateur non authentifié" });
       }
 
       // Vérifier si l'utilisateur existe et a assez de crédits
       const user = await storage.getUser(userId);
+
+      console.log("Vérification de l'utilisateur:", {
+        userId,
+        userFound: !!user,
+        credits: user?.credits
+      });
+
       if (!user) {
         return res.status(404).json({ message: "Utilisateur non trouvé" });
       }
