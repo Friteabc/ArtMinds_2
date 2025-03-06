@@ -48,7 +48,7 @@ export default function Generator() {
       }
 
       console.log("Tentative de génération d'image avec l'utilisateur:", {
-        userId: user.id,
+        userId: user.uid,
         credits: user.credits
       });
 
@@ -57,8 +57,8 @@ export default function Generator() {
         ...data,
         width: dimensions.width,
         height: dimensions.height,
-        userId: user.id,
-        debug: true // Ajouter un flag de debug
+        userId: user.uid, 
+        debug: true
       });
 
       const jsonResponse = await res.json();
@@ -97,10 +97,23 @@ export default function Generator() {
   useEffect(() => {
     console.log("État d'authentification:", {
       isAuthenticated: !!user,
-      userId: user?.id,
+      userId: user?.uid,
       credits: user?.credits
     });
   }, [user]);
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">Veuillez vous connecter</h2>
+          <p className="text-muted-foreground">
+            Vous devez être connecté pour générer des images.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-background/80 pt-8 px-4 md:pt-24">
