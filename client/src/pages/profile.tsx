@@ -25,20 +25,6 @@ export default function Profile() {
     }
   };
 
-  const handleConnectDrive = async () => {
-    try {
-      const response = await fetch('/api/google/authorize');
-      const { url } = await response.json();
-      window.location.href = url;
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de connecter Google Drive"
-      });
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-background/80 pt-8 px-4 md:pt-16">
       <div className="max-w-4xl mx-auto space-y-8">
@@ -74,7 +60,10 @@ export default function Profile() {
                     <CreditCard className="w-8 h-8 text-primary" />
                     <div>
                       <h3 className="font-semibold">Crédits disponibles</h3>
-                      <p className="text-2xl font-bold">{user?.credits || 0}</p>
+                      <p className="text-2xl font-bold">{user?.credits?.toFixed(1) || 0}</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Chaque génération coûte 3.5 crédits
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -91,17 +80,6 @@ export default function Profile() {
                 </CardContent>
               </Card>
             </div>
-
-            {!user?.driveConnected && (
-              <div className="mt-6">
-                <Button onClick={handleConnectDrive} className="w-full">
-                  Connecter Google Drive
-                </Button>
-                <p className="mt-2 text-sm text-center text-muted-foreground">
-                  Connectez votre Google Drive pour sauvegarder vos créations
-                </p>
-              </div>
-            )}
           </CardContent>
         </Card>
 

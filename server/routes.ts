@@ -46,7 +46,14 @@ export async function registerRoutes(app: Express) {
       let user = await storage.getUser(id);
 
       if (!user) {
-        user = await storage.createUser({ id, email });
+        // S'assurer que le nouvel utilisateur reçoit 10 crédits
+        user = await storage.createUser({ 
+          id, 
+          email,
+          credits: 10, // Explicitement définir les crédits initiaux
+          createdAt: new Date()
+        });
+        console.log(`Nouvel utilisateur créé avec ${user.credits} crédits:`, { id, email });
       }
 
       res.json(user);
@@ -87,8 +94,13 @@ export async function registerRoutes(app: Express) {
         throw new Error("Utilisateur non trouvé");
       }
 
+      console.log(`Vérification des crédits pour l'utilisateur ${userId}:`, {
+        creditsDisponibles: user.credits,
+        coutGeneration: 3.5
+      });
+
       if (user.credits < 3.5) {
-        throw new Error("Crédits insuffisants pour générer une image");
+        throw new Error("Crédits insuffisants pour générer une image (3.5 crédits requis)");
       }
 
       const dimensions = aspectRatios[input.aspectRatio];
@@ -150,6 +162,10 @@ export async function registerRoutes(app: Express) {
 
       // Après la génération réussie, déduire les crédits
       const updatedUser = await storage.updateUserCredits(userId, user.credits - 3.5);
+      console.log(`Crédits mis à jour pour l'utilisateur ${userId}:`, {
+        ancienSolde: user.credits,
+        nouveauSolde: updatedUser.credits
+      });
 
       res.json({ 
         imageUrl: imgbbData.url,
