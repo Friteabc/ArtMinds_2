@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -51,3 +51,15 @@ export const generateImageSchema = z.object({
 export type InsertImageGeneration = z.infer<typeof imageGenerationSchema>;
 export type ImageGeneration = typeof imageGenerations.$inferSelect;
 export type GenerateImageInput = z.infer<typeof generateImageSchema>;
+
+export const users = pgTable("users", {
+  id: text("id").primaryKey(), // Firebase UID
+  email: text("email").notNull(),
+  credits: integer("credits").notNull().default(10),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const userSchema = createInsertSchema(users);
+
+export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof userSchema>;
