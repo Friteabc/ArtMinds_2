@@ -4,7 +4,7 @@ import { generateImageSchema, aspectRatios, defaultNegativePrompt } from "@share
 import { ZodError } from "zod";
 
 const HF_API_URL = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0";
-const HF_API_KEY = "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";
+const HF_API_KEY = process.env.HF_API_KEY;
 
 const stylePrompts = {
   "realistic": "realistic, high quality, photorealistic, highly detailed",
@@ -38,6 +38,10 @@ export async function registerRoutes(app: Express) {
       // Combine style prompt with user prompt
       const stylePrompt = stylePrompts[input.style];
       const finalPrompt = `${input.prompt}, ${stylePrompt}`;
+
+      if (!HF_API_KEY) {
+        throw new Error("Hugging Face API key not configured");
+      }
 
       const payload = {
         inputs: finalPrompt,
